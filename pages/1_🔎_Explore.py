@@ -2,51 +2,14 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from Welcome import df
 
 st.set_page_config(page_title="Explore", page_icon="📊")
 st.markdown("# Explore Dataset")
 
-# Retrieving data
-url = 'https://drive.google.com/file/d/15EX86AjdObYhay_I9NQf1_M4f_Tfdq2C/view?usp=sharing'
-url = 'https://drive.google.com/uc?id=' + url.split('/')[-2]
-df = pd.read_csv(url)
-
-#formatting
-# df['Fuel Tank Capacity'] = df['Fuel Tank Capacity'].astype(int)
-# df['Starting Price'] = df['Starting Price'].astype('int32')
-# df['Ending Price'] = df['Ending Price'].astype(int)
-# df['Max Torque (Nm)'] = df['Max Torque (Nm)'].astype(int)
-# df['Max Power (BHP)'] = df['Max Power (BHP)'].astype(int)
-
-#CLEANING DATA
-#Create Brand column
-df['Car Name'] = df['Car Name'].str.replace('Land Rover', 'Land-Rover')
-df['Car Name'] = df['Car Name'].str.replace('Aston Martin', 'Aston-Martin')
-df['Car Name'] = df['Car Name'].str.replace('Rolls Royce', 'Rolls-Royce')
-df['Car Name'] = df['Car Name'].str.replace('Strom Motors', 'Strom-Motors')
-df['Brand'] = df['Car Name'].str.split(' ').str[0]
-
-#Clean Car Name column
-df['Car Name'] = [" ".join(x) for x in df['Car Name'].str.split(' ').str[1:]]
-
-#Clean Reviews Count column
-reviews = df['Reviews Count'].str.replace(' reviews', '')
-reviews = reviews.str.replace(' review', '')
-df['Reviews Count'] = reviews
-
-#Replace NaN with 2 and change from float to int in Seating Capacity column
-df['Seating Capacity'].fillna(2, inplace=True)
-df['Seating Capacity'] = df['Seating Capacity'].apply(lambda x: int(x))
-
-#Convert Starting and Ending Prie to USD
-df['Starting Price'] = df['Starting Price'].map(lambda x: x/80)
-df['Ending Price'] = df['Ending Price'].map(lambda x: x/80)
-
 
 #GROUPING BY BRANDS AND MEAN
 df_mean = df.groupby(['Brand']).mean()
-
 
 #METRICS
 col1, col2, col3 = st.columns(3)
@@ -54,9 +17,7 @@ col1.metric("Brand Listed", len(df_mean.index))
 col2.metric("Cars Listed", len(df))
 col3.metric("Average Rating", float("{:.2f}".format(df['Rating'].mean())))
 
-#RAW DATA
-st.subheader('Raw Data')
-st.dataframe(df.style.set_precision(2))
+
 
 #Graph 1 with price limiter
 index = df_mean.index
@@ -91,3 +52,16 @@ cars_result = df[df['Brand'] == pick].reset_index()[['Car Name', 'Starting Price
 
 st.write(f'Listed cars from {pick} brand are:')
 st.table(cars_result.style.set_precision(2))
+
+
+
+#VIEW CAR SPECIFICATIONS
+#Create car name list
+name_cars = df['Car Name'].unique()
+
+#User car name input
+selected_car = st.selectbox('Select a car: ', name_cars)
+car_name_result = df[df['Car Name'] == selected_car][['Car Name','Brand','Engine Displacement (cc)', 'Fuel Type', 'TransmissionType', 'Seating Capacity', 'Body Type']]
+
+st.write(f'Specification of {selected_car} as below:')
+st.table(car_name_result)
